@@ -10,18 +10,29 @@ import { formatDate } from '~/utils/utils';
 interface Props {
   todo: Todo;
   setSelectedTodo: Dispatch<SetStateAction<Todo | null>>;
+  handleDelete: (todo: Todo) => void;
   isSelected: boolean;
 }
-const TodoCard = ({ todo, setSelectedTodo, isSelected }: Props) => {
-  const { id, createdAt, done, title, updatedAt } = todo;
-  const handleClick = () => setSelectedTodo(todo);
+const TodoCard = ({
+  todo,
+  setSelectedTodo,
+  handleDelete,
+  isSelected,
+}: Props) => {
+  const { createdAt, done, title, updatedAt } = todo;
+  const onViewClick = () => setSelectedTodo(todo);
+  const onDeleteClick = () => handleDelete(todo);
   return (
-    <Card>
+    <Card className={`border-rounded ${isSelected ? 'border-red' : ''}`}>
       <h2>{title}</h2>
       <h2>{formatDate(createdAt)}</h2>
       <h2>{done ? TODO_COMPLETE_TEXT : TODO_INCOMPLETE_TEXT}</h2>
       <h2>{formatDate(updatedAt)}</h2>
-      <Button onClick={handleClick}>View</Button>
+
+      <div className='flex gap-2'>
+        <Button onClick={onViewClick}>Edit</Button>
+        <Button onClick={onDeleteClick}>Delete</Button>
+      </div>
     </Card>
   );
 };

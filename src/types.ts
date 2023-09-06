@@ -5,3 +5,11 @@ export interface Todo {
   title: string;
   updatedAt: string;
 }
+
+export interface TodoFormValues {
+  id: string | null;
+  formValues: {
+    title: string;
+    done: boolean;
+  };
+}
