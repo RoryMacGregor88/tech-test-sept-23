@@ -56,7 +56,7 @@ function App() {
 
       if (isEditing) {
         setTodos((prevTodos) => {
-          const filteredTodos = prevTodos.filter((todo) => todo.id === id);
+          const filteredTodos = prevTodos.filter((todo) => todo.id !== id);
           /** Place most recently edited Todo at top of list */
           return [todo, ...filteredTodos];
         });
@@ -82,7 +82,7 @@ function App() {
         return handleError(error.error);
       }
 
-      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id === id));
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
     } catch (e) {
       const error = e as string;
       return handleError(error);
