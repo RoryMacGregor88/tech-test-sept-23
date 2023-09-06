@@ -1,37 +1,25 @@
 import { useState } from 'react';
 
-import viteLogo from '/vite.svg';
+import { Button, TodoCard } from '~/components';
 
-import reactLogo from './assets/react.svg';
-
-import './App.css';
+import { Todo } from './types';
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [todos, setTodos] = useState<Todo[]>([]);
+
+  const handleClick = async () => {
+    const res = await fetch('http://localhost:8080/todos');
+    const { data: todos } = await res.json();
+    setTodos(todos);
+  };
+
   return (
-    <>
-      <div>
-        <a href='https://vitejs.dev' rel='noreferrer' target='_blank'>
-          <img alt='Vite logo' className='logo' src={viteLogo} />
-        </a>
-        <a href='https://react.dev' rel='noreferrer' target='_blank'>
-          <img alt='React logo' className='logo react' src={reactLogo} />
-        </a>
-      </div>
-      <h1>App</h1>
-      <div className='card'>
-        <h2>Count is: {count}</h2>
-        <button onClick={() => setCount((count) => count + 1)}>
-          Increment
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className='read-the-docs'>
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className='h-screen'>
+      <Button onClick={handleClick}>I am Mantine Button</Button>
+      {todos.map((todo) => (
+        <TodoCard key={todo.id} {...todo} />
+      ))}
+    </div>
   );
 }
 
