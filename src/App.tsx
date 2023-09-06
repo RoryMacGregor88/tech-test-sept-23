@@ -26,7 +26,6 @@ function App() {
         }
 
         const { data: todos } = await res.json();
-        console.log('DATA: ', todos);
         setTodos(todos);
       } catch (e) {
         const error = e as string;
