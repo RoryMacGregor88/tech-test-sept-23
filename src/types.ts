@@ -6,7 +6,7 @@ export interface Todo {
   updatedAt: string;
 }
 
-export interface TodoFormValues {
+export interface TodoFormData {
   id: string | null;
   formValues: {
     title: string;

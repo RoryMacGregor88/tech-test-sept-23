@@ -2,96 +2,82 @@ import { useEffect, useState } from 'react';
 
 import { Modal } from '@mantine/core';
 
-import { TodoCard, TodoForm, TodoList } from '~/components';
+import { Button, TodoCard, TodoForm, TodoList } from '~/components';
 import { TODOS_ENDPOINT } from '~/constants';
-import { Todo, TodoFormValues } from '~/types';
+import { Todo, TodoFormData } from '~/types';
 
-import { handleError } from './utils/utils';
+import { fetchWrapper } from './utils/utils';
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
-
-  const modalIsOpen = !!selectedTodo;
+  const [modalIsOpen, setModalIsOpen] = useState(false);
 
   useEffect(() => {
     /** Immediate function that will run as soon as it is defined */
     (async () => {
-      try {
-        const res = await fetch(TODOS_ENDPOINT);
+      const endpoint = TODOS_ENDPOINT;
 
-        if (!res.ok) {
-          const error = await res.json();
-          return handleError(error.error);
-        }
+      const response = await fetchWrapper({ endpoint });
+      if (!response) return;
 
-        const { data: todos } = await res.json();
-        setTodos(todos);
-      } catch (e) {
-        const error = e as string;
-        return handleError(error);
-      }
+      const { data: todos } = response;
+      setTodos(todos);
     })();
   }, []);
 
-  const handleCloseModal = () => setSelectedTodo(null);
+  const handleCloseModal = () => {
+    setModalIsOpen(false);
+    setSelectedTodo(null);
+  };
 
-  const handleTodoSubmit = async ({ id, formValues }: TodoFormValues) => {
-    try {
-      const isEditing = !!id,
-        endpoint = `${TODOS_ENDPOINT}${isEditing ? `/${id}` : ''}`,
-        method = isEditing ? 'PUT' : 'POST';
+  const handleEdit = (todo: Todo) => {
+    setModalIsOpen(true);
+    setSelectedTodo(todo);
+  };
 
-      const res = await fetch(endpoint, {
-        method,
-        body: JSON.stringify(formValues),
+  const onFormSubmit = async ({ id, formValues }: TodoFormData) => {
+    const { title, done } = formValues;
+
+    /** Endpoint, method and payload vary between creating and editing todos  */
+    const isEditing = !!id,
+      endpoint = `${TODOS_ENDPOINT}/${isEditing ? `${id}` : ''}`,
+      method = isEditing ? 'PUT' : 'POST',
+      payload = isEditing ? { title, done } : { title };
+
+    const response = await fetchWrapper({ endpoint, method, payload });
+    if (!response) return handleCloseModal();
+
+    const { data: todo } = response;
+
+    if (isEditing) {
+      setTodos((prevTodos) => {
+        const filteredTodos = prevTodos.filter((todo) => todo.id !== id);
+        /** Place most recently edited Todo at top of list */
+        return [todo, ...filteredTodos];
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        return handleError(error.error);
-      }
-
-      const { data: todo } = await res.json();
-
-      if (isEditing) {
-        setTodos((prevTodos) => {
-          const filteredTodos = prevTodos.filter((todo) => todo.id !== id);
-          /** Place most recently edited Todo at top of list */
-          return [todo, ...filteredTodos];
-        });
-      } else {
-        setTodos((prevTodos) => [todo, ...prevTodos]);
-      }
-    } catch (e) {
-      const error = e as string;
-      return handleError(error);
+    } else {
+      setTodos((prevTodos) => [todo, ...prevTodos]);
     }
+    handleCloseModal();
   };
 
   const handleDelete = async (todo: Todo) => {
-    try {
-      const { id } = todo;
+    const { id } = todo;
 
-      const res = await fetch(`${TODOS_ENDPOINT}/${todo.id}`, {
-        method: 'DELETE',
-      });
+    const endpoint = `${TODOS_ENDPOINT}/${id}`,
+      method = 'DELETE';
 
-      if (!res.ok) {
-        const error = await res.json();
-        return handleError(error.error);
-      }
+    const response = await fetchWrapper({ endpoint, method });
+    if (!response) return handleCloseModal();
 
-      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
-    } catch (e) {
-      const error = e as string;
-      return handleError(error);
-    }
+    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+    handleCloseModal();
   };
 
   return (
     <>
-      <div className='h-screen'>
+      <div className='h-screen p-4'>
         <TodoList>
           {todos.map((todo) => {
             const isSelected = selectedTodo?.id === todo.id;
@@ -99,17 +85,22 @@ function App() {
               <TodoCard
                 key={todo.id}
                 handleDelete={handleDelete}
+                handleEdit={handleEdit}
                 isSelected={isSelected}
-                setSelectedTodo={setSelectedTodo}
                 todo={todo}
               />
             );
           })}
         </TodoList>
+
+        <div className='flex justify-center'>
+          <Button onClick={() => setModalIsOpen(true)}>Create Todo</Button>
+        </div>
       </div>
-      {!!selectedTodo ? (
+
+      {modalIsOpen ? (
         <Modal opened={modalIsOpen} onClose={handleCloseModal}>
-          <TodoForm selectedTodo={selectedTodo} onSubmit={handleTodoSubmit} />
+          <TodoForm selectedTodo={selectedTodo} onSubmit={onFormSubmit} />
         </Modal>
       ) : null}
     </>

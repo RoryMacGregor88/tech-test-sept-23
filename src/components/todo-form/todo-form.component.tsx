@@ -5,7 +5,7 @@ import * as Yup from 'yup';
 
 import { Button, FormWrapper } from '~/components';
 import { TITLE_REQUIRED_MESSAGE } from '~/constants';
-import { Todo, TodoFormValues } from '~/types';
+import { Todo, TodoFormData } from '~/types';
 
 const todoFormSchema = Yup.object().shape({
   title: Yup.string().required(TITLE_REQUIRED_MESSAGE),
@@ -13,16 +13,16 @@ const todoFormSchema = Yup.object().shape({
 });
 
 interface Props {
-  selectedTodo: Todo;
-  onSubmit: ({ id, formValues }: TodoFormValues) => void;
+  selectedTodo: Todo | null;
+  onSubmit: ({ id, formValues }: TodoFormData) => void;
 }
 
 const TodoForm = ({ selectedTodo, onSubmit }: Props) => {
-  const { id, title, done } = selectedTodo;
+  const { id, title, done } = selectedTodo ?? {};
+
   const {
     register,
     handleSubmit,
-    getValues,
     formState: { errors, isDirty },
   } = useForm({
     mode: 'all',
@@ -33,25 +33,23 @@ const TodoForm = ({ selectedTodo, onSubmit }: Props) => {
     },
   });
 
-  const values = getValues(),
-    isEditing = !!id,
+  const isEditing = !!id,
     isDisabled = !isDirty || !!Object.keys(errors).length;
 
   return (
     <FormWrapper
-      onSubmit={handleSubmit((formValues) => {
-        console.log('HIT FORM');
-        onSubmit({ id: id ?? null, formValues });
-      })}
+      onSubmit={handleSubmit((formValues) =>
+        onSubmit({ id: id ?? null, formValues }),
+      )}
     >
-      <h2>Title: {selectedTodo.title}</h2>
+      <h2>{!!title ? `Title: ${title}` : 'Add New Todo'}</h2>
 
       <Input {...register('title')} placeholder='Title' />
       {errors?.title ? (
         <span className='text-red-500'>{errors.title.message}</span>
       ) : null}
 
-      <Checkbox {...register('done')} checked={values.done} label='Done' />
+      {isEditing ? <Checkbox {...register('done')} label='Done' /> : null}
 
       <Button isDisabled={isDisabled} submitType='submit'>
         {isEditing ? 'Edit' : 'Create'}
